@@ -5,19 +5,11 @@
 using namespace std;
 using namespace sf;
 
-// Create snake
-RectangleShape rectangle(Vector2f(40, 40));
-map<int, RectangleShape> snake = {
-		{ 0, rectangle }
-};
 
-// Create fruit
-RectangleShape fruit(Vector2f(40, 40));
 
 int main() {
 	int screenWidth = 1920;
 	int screenHeight = 1080;
-
 	int snakeSpeed = 40;
 
 	// Create a video mode object
@@ -25,6 +17,15 @@ int main() {
 
 	// Crate and open a window for the game
 	RenderWindow window(vm, "Snake", Style::Fullscreen);
+
+	// Create snake
+	RectangleShape rectangle(Vector2f(40, 40));
+	map<int, RectangleShape> snake = {
+			{ 0, rectangle }
+	};
+
+	// Create fruit
+	RectangleShape fruit(Vector2f(40, 40));
 
 	// Snake setup
 	snake[0].setFillColor(Color::Green);
@@ -39,10 +40,6 @@ int main() {
 	srand((int)time(0));
 	int fruitY = (rand() % ((screenHeight - 40) / 40));
 	int fruitX = (rand() % ((screenWidth - 40) / 40));
-	while (!isSpaceEmpty(Vector2f(fruitX, fruitY))) {
-		fruitY = (rand() % ((screenHeight - 40) / 40));
-		fruitX = (rand() % ((screenWidth - 40) / 40));
-	}
 
 	fruit.setPosition(Vector2f(fruitX * 40, fruitY * 40));
 
@@ -71,23 +68,31 @@ int main() {
 
 		// Player inputs
 		if (Keyboard::isKeyPressed(Keyboard::Up)) {
-			snakeDirection = direction::UP;
+			if (snakeDirection != direction::DOWN) {
+				snakeDirection = direction::UP;
+			}
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Right)) {
-			snakeDirection = direction::RIGHT;
+			if (snakeDirection != direction::LEFT) {
+				snakeDirection = direction::RIGHT;
+			}
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Down)) {
-			snakeDirection = direction::DOWN;
+			if (snakeDirection != direction::UP) {
+				snakeDirection = direction::DOWN;
+			}
 		}
 		if (Keyboard::isKeyPressed(Keyboard::Left)) {
-			snakeDirection = direction::LEFT;
+			if (snakeDirection != direction::RIGHT) {
+				snakeDirection = direction::LEFT;
+			}
 		}
 
 		window.draw(fruit);
 
 		// Draw the snake
 		for (int i = 0; i < snake.size(); i++) {
-			window.draw(snake[0]);
+			window.draw(snake[i]);
 		}
 
 		// Draw the score
@@ -116,6 +121,25 @@ int main() {
 				ss << "Score: " << score;
 				scoreText.setString(ss.str());
 
+				srand((int)time(0));
+				fruitY = (rand() % ((screenHeight - 40) / 40));
+				fruitX = (rand() % ((screenWidth - 40) / 40));
+				fruit.setPosition(Vector2f(fruitX * 40, fruitY * 40));
+
+				int currentSize = snake.size();
+				snake[currentSize] = RectangleShape(Vector2f(40, 40));
+				snake[currentSize].setFillColor(Color::Green);
+				switch (snakeDirection) {
+				case direction::UP:
+					snake[currentSize].setPosition(snake[currentSize-1].getPosition().x, snake[currentSize - 1].getPosition().y + 40);
+				case direction::RIGHT:
+					snake[currentSize].setPosition(snake[currentSize - 1].getPosition().x + 40, snake[currentSize - 1].getPosition().y);
+				case direction::DOWN:
+					snake[currentSize].setPosition(snake[currentSize - 1].getPosition().x, snake[currentSize - 1].getPosition().y - 40);
+				case direction::LEFT:
+					snake[currentSize].setPosition(snake[currentSize - 1].getPosition().x - 40, snake[currentSize - 1].getPosition().y);
+				}
+
 				if (score % 10 == 0 && frameTime > 60) {
 					frameTime -= 20;
 				}
@@ -131,8 +155,8 @@ int main() {
 	}
 }
 
-bool isSpaceEmpty(Vector2f coords) {
-	if (snake[0].getPosition() != coords) {
+bool isSpaceEmpty(map<int, RectangleShape> snake, float x, float y) {
+	if (snake[0].getPosition().x != x && snake[0].getPosition().y != y) {
 		return true;
 	}
 	else {
